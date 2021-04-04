@@ -1,0 +1,205 @@
+算术类型：
+Unicode：万国码、统一码 
+	通常用两个字节表示一个字符，原有的英文编码从单字节变成双字节，只需要把高字节全部填为0就可以。
+	常见有：utf-8/utf-16/utf-32
+	用char、char16_t、char32_t分别表示无符号8位整数，无符号16位整数和无符号32位整数。UTF-8、UTF-16、UTF-32分别以char、char16_t、char32_t作为编码单位。
+		
+一个字节（byte）为8比特（bit） 一个字由32或64比特组成，也就是4或8字节。
+	float-一个字    double-两个字    long double-三或四个字
+		
+带符号类型和无符号类型：
+	unsigned int可以缩写为unsigned
+	字符型有三种：char/unsigned char/signed char （signed char与char并不相同）
+	char会表现为有无符号由编译器决定。
+	无符号类型中所有比特都用来储存值，例如8比特的unsigned char可以表示0至255区间内的值。
+	signed char大多数计算机实际范围定义为-128至127
+	
+类型转换（convert）：
+	赋给无符号类型一个超出范围的值的时候，实际结果是该值对MAX取模后的余数。 unsigned char = -1; => 255(256-1)
+	算术表达式中既有int又有无符号数时，int值会转换成无符号数。int i = -42;unsigned int u = 10;cout<<i+u<<endl; => 4294967264
+	
+字面值常量:
+	20 十进制		024 八进制（0开头）		0x14 十六进制（0x开头）
+	十进制字面值不会是负数。负号不在字面值内，仅是对字面值取负值。
+	两个字面值位置紧邻，仅由空格、缩进、换行符分隔，实际上是一个整体。cout<<"abcde" "fghijk"<<endl;
+	
+转义序列：
+	\" \' \? \\反斜杠 \r回车符 \n换行符 \a报警符
+	泛化转义序列：
+		\x + 十六进制数字 或者 \ + 1、2、3个八进制数字（超出三个数字，只有前三个数字组成转义序列）
+		
+指定字面值类型：
+	前缀（字符、串字面值）：u U L u8 对应 unicode16 unicode32 宽字符（wchar_t） UTF-8
+	后缀（整型、浮点型字面值）：U L LL F L（可为小写） 对应 unsigned long longlong float longdouble
+	
+变量：
+	初始化不是赋值！
+	初始化四种形式：int i=0; int i = {0}; int i{0};int i(0);
+	{}初始化内置类型变量时，如果存在丢失信息的风险将会报错。double d = 3.14159;int a{d};//将会报错，丢失信息的风险
+	
+默认初始化：
+	在函数体外时，变量默认初始化为0。在函数体内，将会不被初始化，试图拷贝、访问此类值将会报错！
+
+声明与定义的关系：
+	分离式编译：将程序分为若干个文件，每个文件单独编译。
+	声明不创建实体，只是使得名字为程序所知： extern int j;
+	在函数体内部试图初始化有extern标记的变量将会引发错误。
+	要在多个文件使用同一个变量必须将声明与定义分离。
+	
+引用：
+	定义引用时，程序把引用和它的初始值绑定在一起，而不是拷贝初始值。
+	一旦绑定，无法令引用重新绑定到另一个对象中！！
+	引用的初始值必须时一个对象。 &r = 10;错误
+	
+指针：
+	指针用于存放地址： int i = 10;int *p = &i;
+	引用与指针：int i = 10;int *p = &i;int &r = *p;
+	空指针：
+		nullptr 与 NULL; nullptr为C++11新标准的一种特殊类型字面值，可以转换成任意其他类型的指针。
+	不能把int变量直接赋给指针：int i=0;int *p = i;即使等于0也不行。
+	
+void*指针：
+	void*可用于存放任意对象的地址。
+	不能直接操作所指的对象。
+
+复合类型的声明：
+	一条定义语句可能定义出不同类型的变量：int i=1024,*p=&i,&r=i;
+	类型修饰符（*或&）不会作用本次定义的全部变量：int* p=nullptr,i=0;p是指针，i是int类型的变量。
+	
+指向指针的指针：
+	int i = 1024;int *p = &i;int **pp = &p（获取p指针的地址，p是i的地址）;
+指向指针的引用：
+	int i = 42;int *p;int *&r = p;//r是一个对指针p的引用！！
+	r = &i;*r = 0;此处r=p
+	&*r为对r所指的对象取地址！！！
+	
+const限定符：
+	const对象必须初始化，其值不能被改变。
+	
+默认状态下，const对象仅在文件内有效：
+	编译器将在编译过程中把用到const变量的地方替换成对应的值！！！
+	多个文件出现同名的const变量时，等同于在不同文件中分别定义独立的const变量！！
+	多个文件共享一个const变量： 
+		extern const int bufSize;声明于头文件中
+		extern const int bufSize = 512;定义于源文件中
+
+const的引用：
+	术语：常量引用是对const的引用
+	初始化和对const的引用：
+		初始化常量引用允许用任意表达式作为初始值，只要表达式结果能转换成引用类型即可。
+		int i=42;
+		const int &r1 = i;允许将const int&绑定到一个普通int对象上
+		const int &r2 = 42;正确，r2是一个常量引用！！
+		const int &r3 = r1 * 2;正确，r3是一个常量引用
+		int &r4 = r1 * 2；错误，r4是一个普通非常量引用
+	允许用任意表达式初始化的原理：
+		double dval = 3.14;
+		const int &ri = dval;
+		相当于:
+			const int temp = dval;浮点数转换为临时的整型变量
+			const int &ri = temp;让ri绑定这个临时量
+			
+对const的引用可能引用一个并非const的对象：
+	int i=42;
+	int &r1 = i;
+	const int &r2 = i;
+	r1 = 0;正确，r1为int类型的引用，可以修改i的值
+	r2 = 0;错误，r2是一个常量引用
+	
+指针和const：const在外，对象的值不能变；const在内，指针指向的地址不能变！！！！！
+	常量指针：const int *p = &i;不能改变所指对象的值。
+		const double pi = 3.14;pi是一个常量，值不能改变
+		double *ptr = &pi;错误，ptr是一个普通指针
+		const double *cptr = &pi;正确，cptr是一个常量指针
+		*cptr = 42;错误，不能赋值
+		与常量引用一样，可以指向一个非常量对象。
+	指针常量：int *const p = &i;不能改变所指的地址。
+		int num = 0;
+		int *const ptr = &num;
+		const double pi = 3.14159;
+		const double *const ppi = &pi;ppi是一个指向常量对象的常量指针（地址与值都不能改变）
+		
+顶层const：表示指针本身是个常量
+底层const：表示指针所指的对象是个常量
+	执行对象的拷贝操作时，拷入和拷出的对象必须具有相同的底层const资格：
+		const int ci = 100;
+		const int *p1 = &ci;
+		int *p = p1;错误，p1包含底层const定义；即p1是const int类型但是，p是int类型
+		
+constexpr和常量表达式：
+	常量表达式是指编译过程就得到计算结果的表达式：
+		const int sz = get_size();不是常量表达式，因为需要运行后才能获取
+	因在复杂系统难以分辨 初始值 是否常量表达式因此出现了constexpr类型：
+		constexpr int sz = size();其中，size()必须是 constexpr类型的函数(足够简单使得编译时就可以计算其结果) 才是一条正确的声明语句		
+		constexpr用到的类型必须有所限制，不能是自定义类、IO库以及string
+		指针与引用可以定义为constexpr，但是有严格限制，constexpr初始值必须是nullptr或者0，或是某个固定地址的对象
+		其中，函数体内定义的变量一般并非固定地址，因此不能为constexpr指针（有例外）！！！函数体外即可。
+		
+指针与constexpr:
+	constptr定义的指针仅对指针有效，与所指对象无关（不能改变地址）：
+		int i = 10;constptr int *q = &i;其中constexpr是顶层const，指针地址不能改变，所指对象的值可以改变。
+		
+类型别名：typedef
+	typedef double wages;wages是double的同义词
+	type wages base,*p;base是double的同义词，p是double*的同义词
+	using SI = Sales_items;SI是Sales_item的同义词
+	
+auto类型：
+	一句可声明多个变量，但变量类型必须相同！！
+	auto类型可能不完全与初始值类型一样：
+		int i = 0;&r = i;auto a = r;a是一个整数，不是一个引用
+	忽略顶层const，保留底层const：
+		const int ci = i;&cr = ci;
+		auto b = ci;b是一个整数（忽略顶层const）
+		auto c = cr;c是一个整数（cr是ci的别名，ci本身是一个顶层const被忽略）
+		auto d = &ci;d是一个指向整数常量的指针（const int *ci对象是一个常量，指针指向的地址可变）
+	如果希望auto类型为顶层const:
+		const auto f = ci;
+	auto可用于引用类型：
+		auto &g = ci;
+		const auto &j = 42;const 引用可以绑定常量
+		
+decltype:
+	用于选择并返回操作数的数据类型：
+		decltype(f()) sum = x;f()函数返回值的数据类型
+	decltype返回变量的类型包括顶层const与引用：
+		const int ci = 0,&cj = ci;
+		decltype(ci) x = 0;
+		decltype(cj) y = x;y是一个引用
+		decltype(cj) z;错误，引用必须初始化
+	decltype返回表达式结果的类型:
+		int i=0,&r = i,*p = &i;
+		decltype(r + 0) b;r+0的结果是int
+		decltype(*p) c;错误，c的类型是int& 必须初始化
+		如果表达式的内容是解引用操作，那么将会得到引用类型！！
+		如果表达式是加上括号的变量，得到的结果将会是引用！！
+			decltype((i)) d;错误，d是int& 必须初始化
+			
+struct：
+	可以为数据成员提供{类内初始值}，没有初始值的成员将被默认初始化（int->0,string->""）
+	
+头文件：
+	预处理器：
+		确保头文件多次包含仍安全工作
+	头文件保护符：
+		#define 把一个名字设定为预处理变量
+		#ifdef 变量已定义为真
+		#ifndef 变量未定义为真
+		#endif 以上两个保护符的结束标志
+	#ifndef SALES_DATA_H
+	#define SALES_DATA_H
+	#include <string>
+	struct Sales_data{
+		std::string bookNo;
+		unsigned units_sold = 0;
+		double revenue = 0.0;
+	};
+	#endif
+	第一次包含头文件，SALES_DATA_H未定义，执行后面操作，定义SALES_DATA_H
+	第二次包含，SALES_DATA_H已定义，跳过后面操作
+	
+
+		
+	
+	
+		
